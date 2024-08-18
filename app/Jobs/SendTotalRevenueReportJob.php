@@ -10,6 +10,8 @@ use Illuminate\Http\Client\RequestException;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
+use Exception;
 
 class SendTotalRevenueReportJob implements ShouldQueue
 {
@@ -20,7 +22,7 @@ class SendTotalRevenueReportJob implements ShouldQueue
      *
      * @var int
      */
-    public int $tries = 50;
+    public int $tries = 5;
 
     /**
      * The maximum number of unhandled exceptions to allow before failing.
@@ -30,11 +32,25 @@ class SendTotalRevenueReportJob implements ShouldQueue
     public int $maxExceptions = 5;
 
     /**
+     * The number of seconds the job should wait before retrying.
+     *
+     * @var int
+     */
+    public int $backoff = 60;
+
+    /**
+     * The number of seconds to wait before retrying the job.
+     *
+     * @var int
+     */
+    public ?string $cacheKey;
+
+    /**
      * Create a new job instance.
      */
     public function __construct()
     {
-        //
+        $this->cacheKey = 'revenue_report_' . now()->format('Y-m-d');
     }
 
     /**
@@ -44,17 +60,39 @@ class SendTotalRevenueReportJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $verificationResponse = $this->postVerification();
+        $step = Cache::get($this->cacheKey . '_step', 0);
 
-        $reportResponse = $this->postReport($verificationResponse);
+        try {
+            if ($step < 1) {
+                $verificationResponse = $this->postVerification();
+                Cache::put($this->cacheKey . '_verification', $verificationResponse, now()->addDay());
+                Cache::put($this->cacheKey . '_step', 1, now()->addDay());
+            } else {
+                $verificationResponse = Cache::get($this->cacheKey . '_verification');
+            }
 
-        $this->postReportConfirmation($reportResponse);
+            if ($step < 2) {
+                $reportResponse = $this->postReport($verificationResponse);
+                Cache::put($this->cacheKey . '_report', $reportResponse, now()->addDay());
+                Cache::put($this->cacheKey . '_step', 2, now()->addDay());
+            } else {
+                $reportResponse = Cache::get($this->cacheKey . '_report');
+            }
+
+            $this->postReportConfirmation($reportResponse);
+
+            // Clear the cache after successful job completion
+            $this->clearCache();
+        } catch (Exception $e) {
+            $this->handleException($e);
+        }
     }
 
     /**
      * Perform HTTP POST to verification endpoint.
      *
      * @throws RequestException
+     * @return array
      */
     private function postVerification(): array
     {
@@ -91,5 +129,38 @@ class SendTotalRevenueReportJob implements ShouldQueue
             'report_id' => $reportResponse['id'],
             'timestamp' => now()->timestamp,
         ])->throw()->json();
+    }
+
+    /**
+     * Handle the exception.
+     *
+     * @param Exception $e
+     * @return void
+     */
+    private function handleException(Exception $e): void
+    {
+        if ($e instanceof RequestException) {
+            if ($e->response->status() === 429) {
+                $this->release(now()->addMinutes(15));
+            } elseif ($e->response->status() >= 500) {
+                $this->release(now()->addSeconds(30));
+            } else {
+                $this->fail($e);
+            }
+        } else {
+            $this->fail($e);
+        }
+    }
+
+    /**
+     * Clear the cache.
+     * @return void
+     */
+    private function clearCache(): void
+    {
+        Cache::forget($this->cacheKey . '_step');
+        Cache::forget($this->cacheKey . '_verification');
+        Cache::forget($this->cacheKey . '_report');
+        Cache::forget('daily_total_revenue');
     }
 }
