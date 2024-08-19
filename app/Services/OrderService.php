@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Interfaces\InventoryManagerInterface;
-use App\Interfaces\OrderRepositoryInterface;
+use App\Repositories\InventoryManagerRepository;
+use App\Repositories\OrderRepository;
 use App\Repositories\PaymentGateways\PaypalRepository;
 use App\Repositories\NotificationRepository;
 use App\Models\Order;
@@ -14,14 +14,14 @@ class OrderService
     /**
      * OrderService constructor.
      *
-     * @param OrderRepositoryInterface $orderRepository
-     * @param InventoryManagerInterface $inventoryManagerRepository
+     * @param OrderRepository $orderRepository
+     * @param InventoryManagerRepository $inventoryManagerRepository
      * @param PaypalRepository $paymentGatewayRepository
      * @param NotificationRepository $notificationRepository
      */
     public function __construct(
-        private OrderRepositoryInterface $orderRepository,
-        private InventoryManagerInterface $inventoryManagerRepository,
+        private OrderRepository $orderRepository,
+        private InventoryManagerRepository $inventoryManagerRepository,
         private PaypalRepository $paymentGatewayRepository,
         private NotificationRepository $notificationRepository,
         private InvoiceRepository $invoiceRepository
