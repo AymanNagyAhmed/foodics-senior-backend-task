@@ -18,6 +18,7 @@ class Order extends Model
      */
     protected $fillable = [
         'name',
+        'branch_id',
     ];
 
     /**
