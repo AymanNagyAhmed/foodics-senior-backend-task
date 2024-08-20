@@ -37,8 +37,12 @@ class OrderController extends Controller
      */
     public function store(StoreOrderRequest $request): JsonResponse
     {
-        $order = $this->service->createOrder($request->validated());
-        return ResponseHelper::successResponse(["order" => OrderResource::make($order)], "Order created successfully", 201);
+        try {
+            $order = $this->service->createOrder($request->validated());
+            return ResponseHelper::successResponse(["order" => OrderResource::make($order)], "Order created successfully", 201);
+        } catch (\Exception $e) {
+            return ResponseHelper::failResponse("Order creation failed.", [$e->getMessage()], $e->getCode() ?? 500);
+        }
     }
 
     /**
