@@ -17,8 +17,8 @@ class OrderResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'branch' => new BranchResource($this->whenLoaded('branch')),
-            'items' => OrderItemResource::collection($this->whenLoaded('items')),
+            'branch' => BranchResource::make($this->whenLoaded('branch')),
+            'items' =>  OrderItemResource::collection($this->whenLoaded('items')),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];
