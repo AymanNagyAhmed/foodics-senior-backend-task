@@ -28,7 +28,7 @@ class Order extends Model
      */
     public function branch(): BelongsTo
     {
-        return $this->belongsTo(Order::class);
+        return $this->belongsTo(Branch::class);
     }
 
     /**
