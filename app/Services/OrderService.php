@@ -8,6 +8,8 @@ use App\Repositories\PaymentGateways\PaypalRepository;
 use App\Repositories\NotificationRepository;
 use App\Models\Order;
 use App\Repositories\InvoiceRepository;
+use App\Repositories\OrderItemRepository;
+use Illuminate\Support\Facades\DB;
 
 class OrderService
 {
@@ -18,13 +20,15 @@ class OrderService
      * @param InventoryManagerRepository $inventoryManagerRepository
      * @param PaypalRepository $paymentGatewayRepository
      * @param NotificationRepository $notificationRepository
+     * @param InvoiceRepository $invoiceRepository
      */
     public function __construct(
         private OrderRepository $orderRepository,
         private InventoryManagerRepository $inventoryManagerRepository,
         private PaypalRepository $paymentGatewayRepository,
         private NotificationRepository $notificationRepository,
-        private InvoiceRepository $invoiceRepository
+        private InvoiceRepository $invoiceRepository,
+        private OrderItemRepository $orderItemRepository
     ) {}
 
     /**
@@ -41,12 +45,29 @@ class OrderService
         $this->orderRepository->validateOrder($order);
         $order = $this->orderRepository->calculateOrderDetails($order);
 
-        $this->orderRepository->storeOrder($order);
+        $this->orderRepository->store($order);
         $this->inventoryManagerRepository->updateInventory($order);
 
         $this->paymentGatewayRepository->processPayment($order->getTotalAmount());
 
         $this->notificationRepository->notifyCustomer($order);
         $this->invoiceRepository->sendInvoice($order);
+    }
+
+    /**
+     * Creates a new order.
+     *
+     * @param array<string, mixed> $orderData
+     *
+     * @return Order
+     */
+    public function createOrder(array $orderData): Order
+    {
+        return DB::transaction(function () use ($orderData) {
+            $order = $this->orderRepository->createOrder($orderData);
+
+            $this->orderItemRepository->createOrderItems($orderData['items'], $order);
+            return $order->load('branch', 'items');
+        });
     }
 }
