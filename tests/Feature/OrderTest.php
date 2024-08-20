@@ -80,8 +80,8 @@ class OrderTest extends TestCase
     {
         $testBranchId = $this->branches->first()->id;
         $testItems = [
-            ['product_id' => $this->products->first()->id, 'quantity' => 2],
-            ['product_id' => $this->products->last()->id, 'quantity' => 5]
+            ['product_id' => $this->products->first()->id, 'quantity' => 2,"price"=>10],
+            ['product_id' => $this->products->last()->id, 'quantity' => 5,"price"=>10]
         ];
         $branchConfig = config("rate_limits.branches.{$testBranchId}", config('rate_limits.default'));
         $orderData = [
@@ -126,8 +126,8 @@ class OrderTest extends TestCase
         $testBranchId = $this->branches->first()->id;
         $testBranchId2 = $this->branches->last()->id;
         $testItems = [
-            ['product_id' => $this->products->first()->id, 'quantity' => 2],
-            ['product_id' => $this->products->last()->id, 'quantity' => 5]
+            ['product_id' => $this->products->first()->id, 'quantity' => 2,"price"=>10],
+            ['product_id' => $this->products->last()->id, 'quantity' => 5,"price"=>15]
         ];
         $branchConfig = config("rate_limits.branches.{$testBranchId}", config('rate_limits.default'));
         $orderData = [
@@ -158,8 +158,8 @@ class OrderTest extends TestCase
     {
         $testBranchId = $this->branches->first()->id;
         $testItems = [
-            ['product_id' => $this->products->first()->id, 'quantity' => 2],
-            ['product_id' => $this->products->last()->id, 'quantity' => 5]
+            ['product_id' => $this->products->first()->id, 'quantity' => 2,"price"=>10],
+            ['product_id' => $this->products->last()->id, 'quantity' => 5,"price"=>15]
         ];
         $orderData = [
             'name' => 'test',
@@ -184,8 +184,8 @@ class OrderTest extends TestCase
     {
         $testBranchId = $this->branches->first()->id;
         $testItems = [
-            ['product_id' => $this->products->first()->id, 'quantity' => 2],
-            ['product_id' => $this->products->last()->id, 'quantity' => 5]
+            ['product_id' => $this->products->first()->id, 'quantity' => 2,"price"=>10],
+            ['product_id' => $this->products->last()->id, 'quantity' => 5,"price"=>15]
         ];
         $orderData = [
             'branch_id' => $testBranchId,
