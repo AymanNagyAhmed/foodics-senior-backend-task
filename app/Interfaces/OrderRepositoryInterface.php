@@ -35,7 +35,16 @@ interface OrderRepositoryInterface
      *
      * @return void
      */
-    public function storeOrder(Order $order): void;
+    public function store(Order $order): void;
+
+    /**
+     * Creates an order.
+     *
+     * @param array $orderData
+     *
+     * @return Order
+     */
+    public function createOrder(array $orderData): Order;
 
 
 }
