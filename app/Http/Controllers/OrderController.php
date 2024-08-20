@@ -4,10 +4,21 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreOrderRequest;
 use App\Http\Requests\UpdateOrderRequest;
+use App\Http\Resources\OrderResource;
 use App\Models\Order;
+use App\Services\OrderService;
+use App\Helpers\ResponseHelper;
+use Illuminate\Http\JsonResponse;
 
 class OrderController extends Controller
 {
+    /**
+     * OrderController constructor.
+     *
+     * @param OrderService $service
+     */
+    public function __construct(private OrderService $service) {}
+
     /**
      * Display a listing of the resource.
      */
@@ -16,12 +27,18 @@ class OrderController extends Controller
         //
     }
 
+
     /**
-     * Store a newly created resource in storage.
+     * Store a new order.
+     *
+     * @param StoreOrderRequest $request
+     *
+     * @return JsonResponse
      */
-    public function store(StoreOrderRequest $request)
+    public function store(StoreOrderRequest $request): JsonResponse
     {
-        //
+        $order = $this->service->createOrder($request->validated());
+        return ResponseHelper::successResponse(["order" => OrderResource::make($order)], "Order created successfully", 201);
     }
 
     /**
